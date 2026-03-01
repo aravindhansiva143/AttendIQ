@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttendIQ — Register Teacher</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#111118; --card:#16161f; --border:#22222e;
+    --accent:#6c63ff; --accent2:#ff6584; --green:#4ade80; --red:#f87171;
+    --text:#e8e8f0; --muted:#6b6b80;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text);
+    min-height:100vh; display:flex; flex-direction:column;
+  }
+  .bg-grid {
+    position:fixed; inset:0; z-index:0;
+    background-image:linear-gradient(rgba(108,99,255,0.04) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(108,99,255,0.04) 1px,transparent 1px);
+    background-size:48px 48px; pointer-events:none;
+  }
+  .orb {
+    position:fixed; border-radius:50%; filter:blur(90px); z-index:0; pointer-events:none;
+    animation:float 9s ease-in-out infinite;
+  }
+  .orb1 { width:500px; height:500px; background:rgba(108,99,255,0.12); top:-200px; right:-100px; }
+  .orb2 { width:400px; height:400px; background:rgba(255,101,132,0.08); bottom:-150px; left:-100px; animation-delay:-4s; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-25px)} }
+  /* NAV */
+  nav {
+    position:relative; z-index:10;
+    background:rgba(10,10,15,0.8); backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    padding:0 32px; height:60px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .nav-brand { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
+  .nav-brand span { color:var(--accent); }
+  .btn-back {
+    padding:7px 16px; border-radius:8px; font-size:13px; font-weight:500;
+    cursor:pointer; border:1px solid var(--border); background:var(--surface);
+    color:var(--text); font-family:'DM Sans',sans-serif; transition:all 0.2s;
+  }
+  .btn-back:hover { border-color:var(--accent); color:var(--accent); }
+  /* MAIN */
+  .main {
+    position:relative; z-index:1; flex:1;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:48px 24px;
+  }
+  .wrapper { width:100%; max-width:1000px; display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:start; }
+  @media(max-width:700px){ .wrapper{ grid-template-columns:1fr; } }
+  /* REGISTER CARD */
+  .card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:20px; padding:36px 36px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.4);
+    animation:slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  .card-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:6px; }
+  .card-sub   { font-size:13px; color:var(--muted); margin-bottom:28px; }
+  .form-group { margin-bottom:18px; }
+  label {
+    display:block; font-size:11px; font-weight:500; color:var(--muted);
+    letter-spacing:0.8px; text-transform:uppercase; margin-bottom:7px;
+  }
+  input, select {
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:12px 14px; color:var(--text);
+    font-family:'DM Sans',sans-serif; font-size:14px; outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus {
+    border-color:var(--accent); box-shadow:0 0 0 3px rgba(108,99,255,0.15);
+  }
+  input::placeholder { color:var(--muted); }
+  .pwd-wrap { position:relative; }
+  .pwd-toggle {
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:var(--muted); cursor:pointer;
+    font-size:16px; padding:4px;
+  }
+  .btn-register {
+    width:100%; padding:14px;
+    background:linear-gradient(135deg,var(--accent),#8b5cf6);
+    border:none; border-radius:10px; color:#fff;
+    font-family:'Syne',sans-serif; font-size:15px; font-weight:700;
+    cursor:pointer; margin-top:8px; transition:all 0.2s;
+    box-shadow:0 8px 24px rgba(108,99,255,0.3); letter-spacing:0.3px;
+  }
+  .btn-register:hover { opacity:0.9; transform:translateY(-1px); }
+  .btn-register:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+  .msg {
+    margin-top:14px; padding:12px 16px; border-radius:10px; font-size:13px; display:none;
+  }
+  .msg.error   { background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); color:var(--red); display:block; }
+  .msg.success { background:rgba(74,222,128,0.1);  border:1px solid rgba(74,222,128,0.3);  color:var(--green); display:block; }
+  /* TEACHERS LIST CARD */
+  .list-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:28px 28px; animation:slideUp 0.5s 0.1s both cubic-bezier(0.16,1,0.3,1); }
+  .list-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:4px; }
+  .list-sub   { font-size:12px; color:var(--muted); margin-bottom:20px; }
+  .teacher-item {
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:12px 14px; margin-bottom:10px;
+    transition:border-color 0.2s;
+  }
+  .teacher-item:hover { border-color:rgba(108,99,255,0.3); }
+  .teacher-item:last-child { margin-bottom:0; }
+  .t-info { display:flex; align-items:center; gap:12px; }
+  .t-avatar {
+    width:36px; height:36px; border-radius:9px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; color:#fff; font-family:'Syne',sans-serif;
+    flex-shrink:0;
+  }
+  .t-name  { font-size:14px; font-weight:500; }
+  .t-course{ font-size:12px; color:var(--muted); }
+  .btn-del {
+    background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.2);
+    color:var(--red); border-radius:7px; padding:5px 11px; font-size:12px;
+    cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; flex-shrink:0;
+  }
+  .btn-del:hover { background:rgba(248,113,113,0.2); }
+  .empty { text-align:center; padding:32px; color:var(--muted); font-size:13px; }
+  .count-badge {
+    display:inline-flex; align-items:center; justify-content:center;
+    background:rgba(108,99,255,0.15); color:var(--accent);
+    border-radius:100px; padding:2px 10px; font-size:12px; font-weight:600;
+    margin-left:8px; font-family:'Syne',sans-serif;
+  }
+  .divider { height:1px; background:var(--border); margin:20px 0; }
+  .login-link {
+    text-align:center; font-size:13px; color:var(--muted);
+  }
+  .login-link a { color:var(--accent); text-decoration:none; font-weight:500; }
+  .login-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<nav>
+  <div class="nav-brand">Attend<span>IQ</span></div>
+  <button class="btn-back" onclick="window.location.href='/'">← Back to Login</button>
+</nav>
+<div class="main">
+  <div class="wrapper">
+
+    <!-- REGISTER FORM -->
+    <div class="card">
+      <div class="card-title">👨‍🏫 Register Teacher</div>
+      <div class="card-sub">Create a new teacher account to access the attendance system</div>
+
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="regName" placeholder="e.g. Dr. Ramesh Kumar" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Subject / Course</label>
+        <input type="text" id="regCourse" placeholder="e.g. Data Structures, Mathematics">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="pwd-wrap">
+          <input type="password" id="regPwd" placeholder="Min 6 characters">
+          <button class="pwd-toggle" onclick="togglePwd('regPwd',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <div class="pwd-wrap">
+          <input type="password" id="regConfirm" placeholder="Re-enter password"
+                 onkeydown="if(event.key==='Enter') registerTeacher()">
+          <button class="pwd-toggle" onclick="togglePwd('regConfirm',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+
+      <button class="btn-register" id="regBtn" onclick="registerTeacher()">
+        ✅ Register Teacher
+      </button>
+      <div id="regMsg" class="msg"></div>
+
+      <div class="divider"></div>
+      <div class="login-link">Already have an account? <a href="/">Login here →</a></div>
+    </div>
+
+    <!-- TEACHERS LIST -->
+    <div class="list-card">
+      <div class="list-title">
+        Registered Teachers
+        <span class="count-badge" id="teacherCount">0</span>
+      </div>
+      <div class="list-sub">All teachers who can start attendance sessions</div>
+      <div id="teachersList"><div class="empty">Loading...</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text';     btn.textContent = '🙈'; }
+  else                         { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function registerTeacher() {
+  const name    = document.getElementById('regName').value.trim();
+  const course  = document.getElementById('regCourse').value.trim();
+  const pwd     = document.getElementById('regPwd').value.trim();
+  const confirm = document.getElementById('regConfirm').value.trim();
+  const msg     = document.getElementById('regMsg');
+  const btn     = document.getElementById('regBtn');
+
+  // Client-side validation
+  if (!name)    { showMsg('error','Please enter teacher name.'); return; }
+  if (!course)  { showMsg('error','Please enter subject/course.'); return; }
+  if (!pwd)     { showMsg('error','Please enter a password.'); return; }
+  if (pwd.length < 6) { showMsg('error','Password must be at least 6 characters.'); return; }
+  if (pwd !== confirm) { showMsg('error','Passwords do not match.'); return; }
+
+  btn.disabled = true; btn.textContent = 'Registering...';
+  msg.className = 'msg';
+
+  try {
+    const res  = await fetch('/api/register-teacher', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, course, password:pwd, confirm})
+    });
+    const data = await res.json();
+    if (data.success) {
+      showMsg('success', '✅ ' + data.message);
+      document.getElementById('regName').value    = '';
+      document.getElementById('regCourse').value  = '';
+      document.getElementById('regPwd').value     = '';
+      document.getElementById('regConfirm').value = '';
+      loadTeachers();
+    } else {
+      showMsg('error', '❌ ' + data.message);
+    }
+  } catch(e) {
+    showMsg('error', 'Server error. Is Flask running?');
+  }
+  btn.disabled = false; btn.textContent = '✅ Register Teacher';
+}
+
+function showMsg(type, text) {
+  const el = document.getElementById('regMsg');
+  el.className = 'msg ' + type;
+  el.textContent = text;
+}
+
+async function loadTeachers() {
+  try {
+    const res  = await fetch('/api/teachers');
+    const data = await res.json();
+    const list = document.getElementById('teachersList');
+    document.getElementById('teacherCount').textContent = data.length;
+    if (!data.length) {
+      list.innerHTML = '<div class="empty">No teachers registered yet.<br>Register the first one above!</div>';
+      return;
+    }
+    list.innerHTML = data.map(t => {
+      const initials = t.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const date = t.created_at ? t.created_at.slice(0,10) : '';
+      return `
+        <div class="teacher-item" id="trow-${t.id}">
+          <div class="t-info">
+            <div class="t-avatar">${initials}</div>
+            <div>
+              <div class="t-name">${t.name}</div>
+              <div class="t-course">${t.course} &nbsp;·&nbsp; Added ${date}</div>
+            </div>
+          </div>
+          <button class="btn-del" onclick="deleteTeacher(${t.id},'${t.name}')">Remove</button>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('teachersList').innerHTML = '<div class="empty">Could not load teachers.</div>';
+  }
+}
+
+async function deleteTeacher(id, name) {
+  if (!confirm(`Remove "${name}" from the system?`)) return;
+  try {
+    const res  = await fetch(`/api/delete-teacher/${id}`, {method:'DELETE'});
+    const data = await res.json();
+    if (data.success) loadTeachers();
+    else alert('Error: ' + data.message);
+  } catch(e) {
+    alert('Server error');
+  }
+}
+
+loadTeachers();
+</script>
+</body>
+</html>

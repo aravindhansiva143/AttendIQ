@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttendIQ — Start Session</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#111118; --card:#16161f; --border:#22222e;
+    --accent:#6c63ff; --accent2:#ff6584; --green:#4ade80; --red:#f87171;
+    --yellow:#fbbf24; --text:#e8e8f0; --muted:#6b6b80;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  .bg-grid {
+    position:fixed; inset:0; z-index:0;
+    background-image: linear-gradient(rgba(108,99,255,0.03) 1px,transparent 1px),
+                      linear-gradient(90deg,rgba(108,99,255,0.03) 1px,transparent 1px);
+    background-size:48px 48px;
+  }
+  /* NAVBAR */
+  nav {
+    position:sticky; top:0; z-index:100;
+    background:rgba(10,10,15,0.85); backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    padding:0 32px; height:60px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .nav-brand { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
+  .nav-brand span { color:var(--accent); }
+  .nav-right { display:flex; align-items:center; gap:16px; }
+  .teacher-badge {
+    display:flex; align-items:center; gap:8px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:6px 12px; font-size:13px;
+  }
+  .teacher-dot { width:8px; height:8px; background:var(--green); border-radius:50%; }
+  .btn-nav {
+    padding:7px 16px; border-radius:8px; font-size:13px; font-weight:500;
+    cursor:pointer; border:none; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+  }
+  .btn-dash { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+  .btn-logout { background:rgba(248,113,113,0.1); color:var(--red); border:1px solid rgba(248,113,113,0.2); }
+  /* MAIN */
+  .main { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:40px 24px; }
+  .page-title { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; margin-bottom:6px; }
+  .page-sub { font-size:14px; color:var(--muted); margin-bottom:36px; }
+  /* CARDS */
+  .card {
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:28px 32px; margin-bottom:24px;
+  }
+  .card-title {
+    font-family:'Syne',sans-serif; font-size:16px; font-weight:700;
+    margin-bottom:20px; display:flex; align-items:center; gap:10px;
+  }
+  .card-title .icon { font-size:20px; }
+  /* FORM */
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+  .form-group { display:flex; flex-direction:column; gap:8px; }
+  label { font-size:12px; font-weight:500; color:var(--muted); letter-spacing:0.8px; text-transform:uppercase; }
+  input, select {
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:11px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px;
+    outline:none; transition:border-color 0.2s, box-shadow 0.2s; appearance:none;
+  }
+  input:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(108,99,255,0.15); }
+  input::placeholder { color:var(--muted); }
+  .info-row {
+    display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  .info-chip {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:8px 14px; font-size:13px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .info-chip .lbl { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; display:block; }
+  .info-chip .val { color:var(--text); font-weight:500; }
+  /* BUTTONS */
+  .btn-start {
+    width:100%; padding:15px;
+    background:linear-gradient(135deg, var(--accent), #8b5cf6);
+    border:none; border-radius:12px; color:#fff;
+    font-family:'Syne',sans-serif; font-size:16px; font-weight:700;
+    cursor:pointer; transition:all 0.2s;
+    box-shadow:0 8px 24px rgba(108,99,255,0.35);
+    letter-spacing:0.3px;
+  }
+  .btn-start:hover { opacity:0.9; transform:translateY(-1px); }
+  .btn-start:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+  .btn-end {
+    width:100%; padding:15px;
+    background:linear-gradient(135deg, var(--red), #e11d48);
+    border:none; border-radius:12px; color:#fff;
+    font-family:'Syne',sans-serif; font-size:16px; font-weight:700;
+    cursor:pointer; transition:all 0.2s;
+    box-shadow:0 8px 24px rgba(248,113,113,0.3);
+    display:none; margin-top:12px;
+  }
+  .btn-end:hover { opacity:0.9; }
+  /* SESSION STATUS */
+  .session-panel { display:none; }
+  .progress-header {
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;
+  }
+  .check-label { font-size:14px; color:var(--muted); }
+  .check-count { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; }
+  .progress-bar-bg {
+    background:var(--surface); border-radius:100px; height:8px; overflow:hidden; margin-bottom:24px;
+  }
+  .progress-bar-fill {
+    height:100%; border-radius:100px;
+    background:linear-gradient(90deg, var(--accent), var(--accent2));
+    width:0%; transition:width 0.5s ease;
+  }
+  /* STUDENT ROWS */
+  .student-grid { display:flex; flex-direction:column; gap:10px; }
+  .student-row {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:12px 16px;
+    display:flex; align-items:center; justify-content:space-between;
+    transition:border-color 0.3s;
+  }
+  .student-row.detected { border-color:rgba(74,222,128,0.4); background:rgba(74,222,128,0.05); }
+  .student-info { display:flex; align-items:center; gap:12px; }
+  .avatar {
+    width:36px; height:36px; border-radius:10px;
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; color:#fff; font-family:'Syne',sans-serif;
+  }
+  .sname { font-size:14px; font-weight:500; }
+  .sroll { font-size:12px; color:var(--muted); }
+  .detect-count {
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:600;
+  }
+  .detect-dots { display:flex; gap:4px; }
+  .dot {
+    width:10px; height:10px; border-radius:50%;
+    background:var(--border); transition:background 0.3s;
+  }
+  .dot.filled { background:var(--green); box-shadow:0 0 8px rgba(74,222,128,0.5); }
+  /* LIVE indicator */
+  .live-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.3);
+    color:var(--green); border-radius:100px; padding:6px 14px; font-size:13px; font-weight:500;
+    margin-bottom:20px; display:none;
+  }
+  .live-pulse {
+    width:8px; height:8px; border-radius:50%; background:var(--green);
+    animation:pulse 1.2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+  .camera-status {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:14px 18px;
+    font-size:14px; color:var(--muted); text-align:center;
+    margin-bottom:16px; display:none;
+  }
+  /* RESULTS */
+  .results-panel { display:none; }
+  .result-table { width:100%; border-collapse:collapse; }
+  .result-table th {
+    text-align:left; font-size:11px; letter-spacing:0.8px; text-transform:uppercase;
+    color:var(--muted); padding:10px 14px; border-bottom:1px solid var(--border);
+  }
+  .result-table td { padding:12px 14px; font-size:14px; border-bottom:1px solid rgba(34,34,46,0.5); }
+  .badge {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; font-family:'Syne',sans-serif;
+  }
+  .badge.present { background:rgba(74,222,128,0.1); color:var(--green); border:1px solid rgba(74,222,128,0.3); }
+  .badge.absent  { background:rgba(248,113,113,0.1); color:var(--red);   border:1px solid rgba(248,113,113,0.3); }
+  .pct-bar { height:5px; border-radius:3px; background:var(--border); overflow:hidden; margin-top:4px; }
+  .pct-fill { height:100%; border-radius:3px; transition:width 0.8s ease; }
+  .toast {
+    position:fixed; bottom:24px; right:24px; z-index:999;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:14px 20px; font-size:14px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.4);
+    transform:translateY(100px); opacity:0;
+    transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .toast.show { transform:translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<nav>
+  <div class="nav-brand">Attend<span>IQ</span></div>
+  <div class="nav-right">
+    <div class="teacher-badge">
+      <div class="teacher-dot"></div>
+      <span id="teacherDisplay">{{ teacher_name }}</span>
+    </div>
+    <button class="btn-nav btn-dash" onclick="window.location.href='/dashboard'">← Dashboard</button>
+    <button class="btn-nav btn-logout" onclick="window.location.href='/logout'">Logout</button>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="page-title">🎓 Start Attendance Session</div>
+  <div class="page-sub">Configure your session details, then start the camera-based attendance</div>
+
+  <!-- SESSION CONFIG CARD -->
+  <div class="card" id="configCard">
+    <div class="card-title"><span class="icon">⚙️</span> Session Configuration</div>
+    <div class="info-row">
+      <div class="info-chip">
+        <span class="lbl">Teacher</span>
+        <span class="val">{{ teacher_name }}</span>
+      </div>
+      <div class="info-chip">
+        <span class="lbl">Department</span>
+        <span class="val">{{ teacher_course }}</span>
+      </div>
+      <div class="info-chip">
+        <span class="lbl">Date</span>
+        <span class="val" id="todayDate"></span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Subject / Course</label>
+        <input type="text" id="subject" value="{{ teacher_course }}" placeholder="e.g. Data Structures">
+      </div>
+      <div class="form-group">
+        <label>Class / Section</label>
+        <input type="text" id="classSection" placeholder="e.g. CSR - A">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Number of Checks</label>
+        <select id="totalChecks">
+          <option value="3">3 checks</option>
+          <option value="5" selected>5 checks</option>
+          <option value="8">8 checks</option>
+          <option value="10">10 checks</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Interval Between Checks</label>
+        <select id="interval">
+          <option value="5">5 seconds</option>
+          <option value="10" selected>10 seconds</option>
+          <option value="20">20 seconds</option>
+          <option value="30">30 seconds</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-start" id="startBtn" onclick="startSession()">🎥 Start Attendance Session</button>
+  </div>
+
+  <!-- LIVE SESSION CARD -->
+  <div class="card session-panel" id="sessionPanel">
+    <div class="card-title"><span class="icon">📡</span> Live Session Running</div>
+    <div class="live-badge" id="liveBadge">
+      <div class="live-pulse"></div>
+      Camera Active — Recording Attendance
+    </div>
+    <div class="camera-status" id="cameraStatus">📷 Opening camera...</div>
+    <div class="progress-header">
+      <div>
+        <div class="check-label">Current Check</div>
+        <div class="check-count"><span id="currentCheck">0</span> / <span id="totalChecksDisplay">5</span></div>
+      </div>
+      <div style="text-align:right">
+        <div class="check-label">Next check in</div>
+        <div class="check-count"><span id="countdown">--</span>s</div>
+      </div>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="student-grid" id="studentGrid"></div>
+    <button class="btn-end" id="endBtn" onclick="endSession()">⏹ End Session & Save Results</button>
+  </div>
+
+  <!-- RESULTS CARD -->
+  <div class="card results-panel" id="resultsPanel">
+    <div class="card-title"><span class="icon">📊</span> Attendance Results</div>
+    <div id="resultsSummary" style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;"></div>
+    <table class="result-table" id="resultsTable">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Roll No</th>
+          <th>Detected</th>
+          <th>Percentage</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+    <div style="margin-top:20px;display:flex;gap:12px;">
+      <button class="btn-start" style="width:auto;padding:12px 24px;font-size:14px;" onclick="window.location.href='/dashboard'">
+        View Full Dashboard →
+      </button>
+      <button class="btn-start" style="width:auto;padding:12px 24px;font-size:14px;background:linear-gradient(135deg,#059669,#10b981);" onclick="newSession()">
+        + New Session
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let activeSessionId = null;
+let students = [];
+let detections = {};
+let checkInterval = null;
+let currentCheckNum = 0;
+let totalChecks = 5;
+let intervalSecs = 10;
+let sessionRunning = false;
+
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN', {
+  weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+
+function showToast(msg, color='#6c63ff') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function loadStudents() {
+  const res = await fetch('/api/students');
+  students = await res.json();
+  detections = {};
+  students.forEach(s => detections[s.id] = 0);
+}
+
+function renderStudentGrid() {
+  const grid = document.getElementById('studentGrid');
+  grid.innerHTML = students.map(s => {
+    const initials = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const dots = Array.from({length: totalChecks}, (_,i) => `<div class="dot" id="dot-${s.id}-${i}"></div>`).join('');
+    return `
+      <div class="student-row" id="srow-${s.id}">
+        <div class="student-info">
+          <div class="avatar">${initials}</div>
+          <div>
+            <div class="sname">${s.name}</div>
+            <div class="sroll">${s.roll_no}</div>
+          </div>
+        </div>
+        <div class="detect-count">
+          <div class="detect-dots" id="dots-${s.id}">${dots}</div>
+          <span id="cnt-${s.id}">0/${totalChecks}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function startSession() {
+  const subject = document.getElementById('subject').value.trim() || 'General';
+  totalChecks = parseInt(document.getElementById('totalChecks').value);
+  intervalSecs = parseInt(document.getElementById('interval').value);
+
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('startBtn').textContent = 'Starting...';
+
+  await loadStudents();
+
+  const res = await fetch('/api/start-session', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({subject, total_checks: totalChecks, interval: intervalSecs})
+  });
+  const data = await res.json();
+  if (!data.success) {
+    showToast('Error: ' + data.message, '#f87171');
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('startBtn').textContent = '🎥 Start Attendance Session';
+    return;
+  }
+
+  activeSessionId = data.session_id;
+  sessionRunning = true;
+
+  // Show session panel
+  document.getElementById('configCard').style.display = 'none';
+  document.getElementById('sessionPanel').style.display = 'block';
+  document.getElementById('liveBadge').style.display = 'inline-flex';
+  document.getElementById('cameraStatus').style.display = 'block';
+  document.getElementById('totalChecksDisplay').textContent = totalChecks;
+  document.getElementById('endBtn').style.display = 'block';
+
+  renderStudentGrid();
+  showToast('Session started! Camera detecting...', '#4ade80');
+
+  // Start check loop
+  runChecks();
+}
+
+async function runChecks() {
+  for (let i = 1; i <= totalChecks; i++) {
+    if (!sessionRunning) break;
+    currentCheckNum = i;
+    document.getElementById('currentCheck').textContent = i;
+    document.getElementById('progressFill').style.width = ((i-1)/totalChecks*100) + '%';
+    document.getElementById('cameraStatus').textContent = `📷 Check ${i}/${totalChecks} — Camera scanning faces...`;
+
+    // Simulate camera detection (real system runs take_attendance.py separately)
+    // In real flow, take_attendance.py updates DB; we just poll DB here
+    await simulateCameraCheck(i);
+
+    // Countdown to next check
+    if (i < totalChecks) {
+      await countdown(intervalSecs);
+    }
+  }
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('currentCheck').textContent = totalChecks;
+  document.getElementById('cameraStatus').textContent = '✅ All checks complete! Click End Session to save results.';
+  showToast('All checks done! Click End Session.', '#fbbf24');
+}
+
+async function simulateCameraCheck(checkNum) {
+  // Poll DB for latest detected counts (take_attendance.py updates DB live)
+  // For now we also do a small visual flash
+  document.getElementById('cameraStatus').style.borderColor = '#6c63ff';
+  setTimeout(() => { document.getElementById('cameraStatus').style.borderColor = 'var(--border)'; }, 500);
+
+  const res = await fetch(`/api/session-status/${activeSessionId}`);
+  const rows = await res.json();
+  rows.forEach(r => {
+    const s = students.find(x => x.name === r.student_name);
+    if (!s) return;
+    detections[s.id] = r.detected_count;
+    document.getElementById('cnt-' + s.id).textContent = `${r.detected_count}/${totalChecks}`;
+    // Fill dots
+    for (let d = 0; d < totalChecks; d++) {
+      const dot = document.getElementById(`dot-${s.id}-${d}`);
+      if (dot) dot.className = 'dot' + (d < r.detected_count ? ' filled' : '');
+    }
+    const row = document.getElementById(`srow-${s.id}`);
+    if (r.detected_count > 0) row.classList.add('detected');
+    else row.classList.remove('detected');
+  });
+}
+
+function countdown(secs) {
+  return new Promise(resolve => {
+    let remaining = secs;
+    const el = document.getElementById('countdown');
+    el.textContent = remaining;
+    const timer = setInterval(() => {
+      remaining--;
+      el.textContent = remaining;
+      if (remaining <= 0) { clearInterval(timer); resolve(); }
+    }, 1000);
+  });
+}
+
+async function endSession() {
+  if (!activeSessionId) return;
+  sessionRunning = false;
+  document.getElementById('endBtn').disabled = true;
+  document.getElementById('endBtn').textContent = 'Saving results...';
+
+  const res = await fetch('/api/end-session', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({session_id: activeSessionId})
+  });
+  const data = await res.json();
+  if (!data.success) {
+    showToast('Error ending session: ' + data.message, '#f87171');
+    document.getElementById('endBtn').disabled = false;
+    document.getElementById('endBtn').textContent = '⏹ End Session & Save Results';
+    return;
+  }
+
+  showResults(data.results);
+  document.getElementById('sessionPanel').style.display = 'none';
+  document.getElementById('resultsPanel').style.display = 'block';
+  showToast('Results saved to database! ✅', '#4ade80');
+}
+
+function showResults(results) {
+  const present = results.filter(r => r.status === 'PRESENT').length;
+  const absent  = results.filter(r => r.status === 'ABSENT').length;
+  document.getElementById('resultsSummary').innerHTML = `
+    <div style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:10px;padding:14px 20px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:#4ade80;font-family:Syne,sans-serif">${present}</div>
+      <div style="font-size:12px;color:#6b6b80;text-transform:uppercase;letter-spacing:0.5px">Present</div>
+    </div>
+    <div style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:10px;padding:14px 20px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:#f87171;font-family:Syne,sans-serif">${absent}</div>
+      <div style="font-size:12px;color:#6b6b80;text-transform:uppercase;letter-spacing:0.5px">Absent</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:var(--text);font-family:Syne,sans-serif">${results.length}</div>
+      <div style="font-size:12px;color:#6b6b80;text-transform:uppercase;letter-spacing:0.5px">Total</div>
+    </div>`;
+
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = results.map(r => {
+    const pct = r.percentage || 0;
+    const color = pct >= 60 ? '#4ade80' : '#f87171';
+    return `<tr>
+      <td style="font-weight:500">${r.student_name}</td>
+      <td style="color:var(--muted)">${r.roll_no}</td>
+      <td>${r.detected_count}/${r.total_checks}</td>
+      <td>
+        <div>${pct.toFixed(1)}%</div>
+        <div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${color}"></div></div>
+      </td>
+      <td><span class="badge ${r.status === 'PRESENT' ? 'present' : 'absent'}">${r.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function newSession() {
+  activeSessionId = null;
+  sessionRunning = false;
+  currentCheckNum = 0;
+  document.getElementById('resultsPanel').style.display = 'none';
+  document.getElementById('configCard').style.display = 'block';
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('startBtn').textContent = '🎥 Start Attendance Session';
+}
+</script>
+</body>
+</html>

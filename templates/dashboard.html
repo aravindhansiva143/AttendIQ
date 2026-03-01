@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttendIQ — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#111118; --card:#16161f; --border:#22222e;
+    --accent:#6c63ff; --accent2:#ff6584; --green:#4ade80; --red:#f87171;
+    --yellow:#fbbf24; --text:#e8e8f0; --muted:#6b6b80;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  .bg-grid {
+    position:fixed; inset:0; z-index:0;
+    background-image: linear-gradient(rgba(108,99,255,0.03) 1px,transparent 1px),
+                      linear-gradient(90deg,rgba(108,99,255,0.03) 1px,transparent 1px);
+    background-size:48px 48px; pointer-events:none;
+  }
+  nav {
+    position:sticky; top:0; z-index:100;
+    background:rgba(10,10,15,0.9); backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    padding:0 32px; height:60px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .nav-brand { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
+  .nav-brand span { color:var(--accent); }
+  .nav-right { display:flex; align-items:center; gap:12px; }
+  .teacher-badge {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:6px 12px; font-size:13px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tdot { width:8px; height:8px; background:var(--green); border-radius:50%; }
+  .btn-nav {
+    padding:7px 16px; border-radius:8px; font-size:13px; font-weight:500;
+    cursor:pointer; border:none; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+  }
+  .btn-primary { background:linear-gradient(135deg,var(--accent),#8b5cf6); color:#fff; box-shadow:0 4px 12px rgba(108,99,255,0.3); }
+  .btn-logout  { background:rgba(248,113,113,0.1); color:var(--red); border:1px solid rgba(248,113,113,0.2); }
+  /* LAYOUT */
+  .main { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:36px 24px; }
+  .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+  .page-title { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; }
+  .page-sub { font-size:13px; color:var(--muted); margin-top:4px; }
+  /* STATS GRID */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  @media(max-width:768px){ .stats-grid{ grid-template-columns:repeat(2,1fr); } }
+  .stat-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:20px 22px; position:relative; overflow:hidden;
+    transition:transform 0.2s, border-color 0.2s;
+  }
+  .stat-card:hover { transform:translateY(-2px); border-color:rgba(108,99,255,0.3); }
+  .stat-card::before {
+    content:''; position:absolute; top:0; right:0;
+    width:80px; height:80px; border-radius:50%;
+    filter:blur(30px); opacity:0.3;
+  }
+  .stat-card.blue::before  { background:var(--accent); }
+  .stat-card.green::before { background:var(--green); }
+  .stat-card.red::before   { background:var(--red); }
+  .stat-card.yellow::before{ background:var(--yellow); }
+  .stat-icon { font-size:22px; margin-bottom:14px; }
+  .stat-val  { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; line-height:1; }
+  .stat-lbl  { font-size:12px; color:var(--muted); margin-top:6px; text-transform:uppercase; letter-spacing:0.6px; }
+  /* TABS */
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:24px; }
+  .tab {
+    padding:10px 18px; font-size:14px; font-weight:500; cursor:pointer;
+    border-bottom:2px solid transparent; color:var(--muted); transition:all 0.2s;
+    font-family:'DM Sans',sans-serif; background:none; border-top:none; border-left:none; border-right:none;
+  }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+  /* TABLE */
+  .tbl-wrap { overflow-x:auto; border-radius:12px; border:1px solid var(--border); }
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    background:var(--surface); font-size:11px; font-weight:500; letter-spacing:0.8px;
+    text-transform:uppercase; color:var(--muted); padding:13px 16px; text-align:left;
+    white-space:nowrap;
+  }
+  tbody tr { transition:background 0.15s; border-bottom:1px solid rgba(34,34,46,0.6); }
+  tbody tr:hover { background:rgba(108,99,255,0.04); }
+  tbody tr:last-child { border-bottom:none; }
+  td { padding:13px 16px; font-size:14px; }
+  .badge {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 9px; border-radius:6px; font-size:12px; font-weight:600; font-family:'Syne',sans-serif;
+  }
+  .badge.present { background:rgba(74,222,128,0.1); color:var(--green); border:1px solid rgba(74,222,128,0.25); }
+  .badge.absent  { background:rgba(248,113,113,0.1); color:var(--red);   border:1px solid rgba(248,113,113,0.25); }
+  .badge.ongoing { background:rgba(251,191,36,0.1);  color:var(--yellow);border:1px solid rgba(251,191,36,0.25); }
+  .pct-cell { display:flex; align-items:center; gap:10px; min-width:120px; }
+  .pct-bar-bg { flex:1; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .pct-bar-fill { height:100%; border-radius:3px; }
+  .loading { text-align:center; color:var(--muted); padding:48px; font-size:14px; }
+  /* REFRESH */
+  .refresh-bar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:16px; flex-wrap:wrap; gap:12px;
+  }
+  .refresh-info { font-size:13px; color:var(--muted); }
+  .btn-refresh {
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--text); border-radius:8px; padding:6px 14px; font-size:13px;
+    cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s;
+  }
+  .btn-refresh:hover { border-color:var(--accent); }
+  /* CARD header */
+  .section-header {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:16px; flex-wrap:wrap; gap:12px;
+  }
+  .section-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; }
+  .empty-state { text-align:center; padding:48px; color:var(--muted); font-size:14px; }
+  .avatar-sm {
+    width:32px; height:32px; border-radius:8px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:#fff; font-family:'Syne',sans-serif;
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<nav>
+  <div class="nav-brand">Attend<span>IQ</span></div>
+  <div class="nav-right">
+    <div class="teacher-badge"><div class="tdot"></div><span>{{ teacher_name }}</span></div>
+    <button class="btn-nav btn-primary" onclick="window.location.href='/session-page'">🎥 Start Session</button>
+    <button class="btn-nav btn-logout" onclick="window.location.href='/logout'">Logout</button>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="page-header">
+    <div>
+      <div class="page-title">📊 Attendance Dashboard</div>
+      <div class="page-sub" id="dateDisplay"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon">👥</div>
+      <div class="stat-val" id="statStudents">—</div>
+      <div class="stat-lbl">Total Students</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-val" id="statPresent">—</div>
+      <div class="stat-lbl">Present Today</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-icon">❌</div>
+      <div class="stat-val" id="statAbsent">—</div>
+      <div class="stat-lbl">Absent Today</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-icon">📈</div>
+      <div class="stat-val" id="statRate">—</div>
+      <div class="stat-lbl">Attendance Rate</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('attendance', this)">📋 Attendance</button>
+    <button class="tab" onclick="switchTab('students', this)">👤 Students</button>
+    <button class="tab" onclick="switchTab('sessions', this)">🗓 Sessions</button>
+  </div>
+
+  <!-- ATTENDANCE TAB -->
+  <div class="tab-panel active" id="tab-attendance">
+    <div class="refresh-bar">
+      <div class="refresh-info">Showing all attendance records · <span id="lastRefresh">Loading...</span></div>
+      <button class="btn-refresh" onclick="loadAll()">↻ Refresh</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Roll No</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Detected</th>
+            <th>Percentage</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="attendanceBody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- STUDENTS TAB -->
+  <div class="tab-panel" id="tab-students">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Roll No</th>
+            <th>Registered Date</th>
+          </tr>
+        </thead>
+        <tbody id="studentsBody"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SESSIONS TAB -->
+  <div class="tab-panel" id="tab-sessions">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Session ID</th>
+            <th>Date</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Total Checks</th>
+            <th>Status</th>
+            <th>Start Time</th>
+          </tr>
+        </thead>
+        <tbody id="sessionsBody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-IN', {
+  weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+async function loadStats() {
+  const res = await fetch('/api/stats');
+  const d = await res.json();
+  document.getElementById('statStudents').textContent = d.total_students ?? '0';
+  document.getElementById('statPresent').textContent = d.present ?? '0';
+  document.getElementById('statAbsent').textContent = d.absent ?? '0';
+  document.getElementById('statRate').textContent = (d.attendance_rate ?? 0) + '%';
+}
+
+async function loadAttendance() {
+  const res = await fetch('/api/attendance');
+  const rows = await res.json();
+  const tbody = document.getElementById('attendanceBody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No attendance records yet. Start a session!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const pct = r.percentage || 0;
+    const color = pct >= 60 ? '#4ade80' : '#f87171';
+    const initials = r.student_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return `<tr>
+      <td style="display:flex;align-items:center;gap:10px;min-width:160px">
+        <span class="avatar-sm">${initials}</span>${r.student_name}
+      </td>
+      <td style="color:var(--muted)">${r.roll_no}</td>
+      <td>${r.subject || '—'}</td>
+      <td style="color:var(--muted)">${r.teacher_name || '—'}</td>
+      <td>${r.detected_count}/${r.total_checks}</td>
+      <td>
+        <div class="pct-cell">
+          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <span style="font-size:13px;color:${color};min-width:38px">${pct.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td><span class="badge ${r.status === 'PRESENT' ? 'present' : 'absent'}">${r.status}</span></td>
+      <td style="color:var(--muted)">${r.session_date || '—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+async function loadStudents() {
+  const res = await fetch('/api/students');
+  const rows = await res.json();
+  const tbody = document.getElementById('studentsBody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No students registered yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const initials = r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return `<tr>
+      <td style="display:flex;align-items:center;gap:10px">
+        <span class="avatar-sm">${initials}</span>${r.name}
+      </td>
+      <td style="color:var(--muted)">${r.roll_no}</td>
+      <td style="color:var(--muted)">${r.registered_date || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadSessions() {
+  const res = await fetch('/api/sessions');
+  const rows = await res.json();
+  const tbody = document.getElementById('sessionsBody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No sessions recorded yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>#${r.id}</td>
+    <td style="color:var(--muted)">${r.session_date || '—'}</td>
+    <td>${r.subject || '—'}</td>
+    <td style="color:var(--muted)">${r.teacher_name || '—'}</td>
+    <td>${r.total_checks || '—'}</td>
+    <td><span class="badge ${r.status === 'completed' ? 'present' : 'ongoing'}">${r.status || 'ongoing'}</span></td>
+    <td style="color:var(--muted)">${r.start_time ? r.start_time.slice(0,16) : '—'}</td>
+  </tr>`).join('');
+}
+
+async function loadAll() {
+  await Promise.all([loadStats(), loadAttendance(), loadStudents(), loadSessions()]);
+}
+
+loadAll();
+setInterval(loadAll, 30000); // auto-refresh every 30s
+</script>
+</body>
+</html>

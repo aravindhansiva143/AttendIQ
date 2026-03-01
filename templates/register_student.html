@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register Student – AttendIQ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .card { background: #1e293b; border-radius: 16px; padding: 40px; width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  h2 { font-size: 1.6rem; color: #38bdf8; margin-bottom: 8px; }
+  p.sub { color: #94a3b8; font-size: 0.9rem; margin-bottom: 28px; }
+
+  /* STEPS */
+  .steps { display: flex; gap: 0; margin-bottom: 32px; }
+  .step { flex: 1; text-align: center; position: relative; }
+  .step:not(:last-child)::after { content: ''; position: absolute; top: 16px; left: 60%; width: 80%; height: 2px; background: #334155; z-index: 0; }
+  .step.done:not(:last-child)::after { background: #38bdf8; }
+  .step-circle { width: 32px; height: 32px; border-radius: 50%; background: #334155; color: #64748b; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; position: relative; z-index: 1; transition: all 0.3s; }
+  .step.active .step-circle { background: #38bdf8; color: #0f172a; }
+  .step.done .step-circle { background: #4ade80; color: #0f172a; }
+  .step-label { font-size: 0.72rem; color: #64748b; }
+  .step.active .step-label { color: #38bdf8; }
+  .step.done .step-label { color: #4ade80; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+  input { width: 100%; padding: 12px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 1rem; margin-bottom: 18px; outline: none; transition: border 0.2s; }
+  input:focus { border-color: #38bdf8; }
+  .hint { font-size: 0.78rem; color: #64748b; margin-top: -12px; margin-bottom: 18px; }
+
+  .btn { width: 100%; padding: 13px; font-weight: 700; font-size: 1rem; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-family: 'Segoe UI', sans-serif; }
+  .btn-blue { background: #38bdf8; color: #0f172a; }
+  .btn-blue:hover { background: #7dd3fc; }
+  .btn-green { background: #4ade80; color: #0f172a; }
+  .btn-green:hover { background: #86efac; }
+  .btn-outline { background: transparent; color: #94a3b8; border: 1px solid #334155; margin-top: 10px; }
+  .btn-outline:hover { border-color: #38bdf8; color: #38bdf8; }
+  .btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+  .msg { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 0.9rem; display: none; }
+  .msg.success { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; display: block; }
+  .msg.error   { background: #450a0a; color: #fca5a5; border: 1px solid #dc2626; display: block; }
+  .msg.info    { background: #0c2340; color: #7dd3fc; border: 1px solid #0369a1; display: block; }
+
+  /* FACE CAPTURE AREA */
+  .face-box { background: #0f172a; border: 2px dashed #334155; border-radius: 12px; padding: 28px; text-align: center; margin-bottom: 20px; }
+  .face-box.capturing { border-color: #38bdf8; animation: pulse 1s infinite; }
+  .face-box.done { border-color: #4ade80; border-style: solid; }
+  @keyframes pulse { 0%,100%{ border-color: #38bdf8; } 50%{ border-color: #7dd3fc; } }
+  .face-icon { font-size: 3rem; margin-bottom: 12px; }
+  .face-title { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+  .face-desc { font-size: 0.85rem; color: #64748b; margin-bottom: 16px; }
+
+  /* PHOTO COUNTER */
+  .photo-grid { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .photo-dot { width: 40px; height: 40px; border-radius: 8px; background: #1e293b; border: 2px solid #334155; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.3s; }
+  .photo-dot.captured { background: #064e3b; border-color: #4ade80; }
+
+  .progress-bar { background: #334155; border-radius: 50px; height: 8px; margin-bottom: 8px; overflow: hidden; }
+  .progress-fill { height: 8px; border-radius: 50px; background: linear-gradient(90deg, #38bdf8, #4ade80); transition: width 0.5s ease; }
+  .progress-label { font-size: 0.8rem; color: #64748b; text-align: center; }
+
+  .back { display: inline-block; margin-top: 20px; color: #38bdf8; text-decoration: none; font-size: 0.9rem; }
+  .back:hover { text-decoration: underline; }
+
+  .student-summary { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+  .student-summary .name { font-size: 1.1rem; font-weight: 700; color: #38bdf8; }
+  .student-summary .roll { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>&#128100; Register Student</h2>
+  <p class="sub">Fill details then capture face photos for recognition</p>
+
+  <!-- STEP INDICATOR -->
+  <div class="steps">
+    <div class="step active" id="step1">
+      <div class="step-circle">1</div>
+      <div class="step-label">Details</div>
+    </div>
+    <div class="step" id="step2">
+      <div class="step-circle">2</div>
+      <div class="step-label">Face Capture</div>
+    </div>
+    <div class="step" id="step3">
+      <div class="step-circle">3</div>
+      <div class="step-label">Done</div>
+    </div>
+  </div>
+
+  <!-- PANEL 1: DETAILS FORM -->
+  <div class="panel active" id="panel1">
+    <label>Full Name</label>
+    <input type="text" id="name" placeholder="e.g. Aravindhan S" />
+
+    <label>Roll Number</label>
+    <input type="text" id="roll_no" placeholder="e.g. 24CSR024" />
+
+    <label>Student Password</label>
+    <input type="password" id="password" placeholder="Set a login password" />
+    <p class="hint">Student will use this to login to their attendance portal</p>
+
+    <button class="btn btn-blue" id="registerBtn" onclick="registerStudent()">Register &amp; Continue to Face Capture</button>
+    <div class="msg" id="msg1"></div>
+    <br>
+    <a href="/dashboard" class="back">&#8592; Back to Dashboard</a>
+  </div>
+
+  <!-- PANEL 2: FACE CAPTURE -->
+  <div class="panel" id="panel2">
+    <div class="student-summary">
+      <div class="name" id="summaryName"></div>
+      <div class="roll" id="summaryRoll"></div>
+    </div>
+
+    <div class="face-box" id="faceBox">
+      <div class="face-icon">&#128247;</div>
+      <div class="face-title">Face Photo Capture</div>
+      <div class="face-desc">Position face in front of camera.<br>System will automatically capture 5 photos.</div>
+
+      <div class="photo-grid">
+        <div class="photo-dot" id="dot1">1</div>
+        <div class="photo-dot" id="dot2">2</div>
+        <div class="photo-dot" id="dot3">3</div>
+        <div class="photo-dot" id="dot4">4</div>
+        <div class="photo-dot" id="dot5">5</div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">0 / 5 photos captured</div>
+    </div>
+
+    <button class="btn btn-blue" id="captureBtn" onclick="startCapture()">&#128247; Start Camera &amp; Capture</button>
+    <div class="msg" id="msg2"></div>
+    <button class="btn btn-outline" onclick="skipCapture()">Skip for now (add photos manually later)</button>
+  </div>
+
+  <!-- PANEL 3: SUCCESS -->
+  <div class="panel" id="panel3">
+    <div style="text-align:center; padding: 20px 0;">
+      <div style="font-size: 4rem; margin-bottom: 16px;">&#9989;</div>
+      <div style="font-size: 1.3rem; font-weight: 700; color: #4ade80; margin-bottom: 8px;">Student Registered!</div>
+      <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 28px;" id="doneMsg"></div>
+      <button class="btn btn-blue" onclick="registerAnother()">Register Another Student</button>
+      <br>
+      <a href="/dashboard" class="back">&#8592; Back to Dashboard</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let registeredStudentId = null;
+let registeredName = '';
+let registeredRoll = '';
+
+async function registerStudent() {
+  const name     = document.getElementById('name').value.trim();
+  const roll_no  = document.getElementById('roll_no').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const btn      = document.getElementById('registerBtn');
+  const msg      = document.getElementById('msg1');
+
+  if (!name || !roll_no || !password) {
+    showMsg('msg1', 'Please fill in all fields.', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Registering...';
+
+  try {
+    const res  = await fetch('/api/register-student', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ name, roll_no, password })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      registeredStudentId = data.student_id;
+      registeredName = name;
+      registeredRoll = roll_no;
+
+      // Move to step 2
+      document.getElementById('summaryName').textContent = name;
+      document.getElementById('summaryRoll').textContent = 'Roll No: ' + roll_no + '  |  ID: ' + data.student_id;
+      goToStep(2);
+    } else {
+      showMsg('msg1', data.message || 'Registration failed.', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Register & Continue to Face Capture';
+    }
+  } catch(e) {
+    showMsg('msg1', 'Connection error.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Register & Continue to Face Capture';
+  }
+}
+
+async function startCapture() {
+  const btn = document.getElementById('captureBtn');
+  const box = document.getElementById('faceBox');
+
+  btn.disabled = true;
+  btn.textContent = 'Camera running... Please wait';
+  box.className = 'face-box capturing';
+  showMsg('msg2', 'Camera is open. Look straight at the camera. Capturing 5 photos automatically...', 'info');
+
+  // Animate dots one by one while waiting
+  let dotCount = 0;
+  const dotInterval = setInterval(() => {
+    if (dotCount < 5) {
+      dotCount++;
+      document.getElementById('dot' + dotCount).className = 'photo-dot captured';
+      document.getElementById('dot' + dotCount).textContent = '✓';
+      document.getElementById('progressFill').style.width = (dotCount * 20) + '%';
+      document.getElementById('progressLabel').textContent = dotCount + ' / 5 photos captured';
+    }
+  }, 1200);
+
+  try {
+    const res  = await fetch('/api/capture-face/' + registeredStudentId, { method: 'POST' });
+    const data = await res.json();
+
+    clearInterval(dotInterval);
+
+    if (data.success) {
+      // Fill remaining dots
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById('dot' + i).className = 'photo-dot captured';
+        document.getElementById('dot' + i).textContent = '✓';
+      }
+      document.getElementById('progressFill').style.width = '100%';
+      document.getElementById('progressLabel').textContent = '5 / 5 photos captured';
+      box.className = 'face-box done';
+
+      document.getElementById('doneMsg').textContent = registeredName + ' registered with face photos! Ready for attendance.';
+      setTimeout(() => goToStep(3), 1000);
+    } else {
+      clearInterval(dotInterval);
+      box.className = 'face-box';
+      showMsg('msg2', data.message || 'Face capture failed. Try again.', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Retry Camera Capture';
+    }
+  } catch(e) {
+    clearInterval(dotInterval);
+    box.className = 'face-box';
+    showMsg('msg2', 'Camera error. Make sure no other app is using the camera.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Retry Camera Capture';
+  }
+}
+
+function skipCapture() {
+  document.getElementById('doneMsg').textContent = registeredName + ' registered. Add face photos manually to database/faces/ folder later.';
+  goToStep(3);
+}
+
+function goToStep(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel' + n).classList.add('active');
+
+  // Update step indicators
+  for (let i = 1; i <= 3; i++) {
+    const s = document.getElementById('step' + i);
+    s.className = 'step';
+    if (i < n)  s.className = 'step done';
+    if (i === n) s.className = 'step active';
+  }
+}
+
+function registerAnother() {
+  registeredStudentId = null;
+  registeredName = '';
+  registeredRoll = '';
+  document.getElementById('name').value = '';
+  document.getElementById('roll_no').value = '';
+  document.getElementById('password').value = '';
+  document.getElementById('registerBtn').disabled = false;
+  document.getElementById('registerBtn').textContent = 'Register & Continue to Face Capture';
+  document.getElementById('msg1').className = 'msg';
+  // Reset dots
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('dot' + i).className = 'photo-dot';
+    document.getElementById('dot' + i).textContent = i;
+  }
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressLabel').textContent = '0 / 5 photos captured';
+  document.getElementById('faceBox').className = 'face-box';
+  document.getElementById('captureBtn').disabled = false;
+  document.getElementById('captureBtn').textContent = 'Start Camera & Capture';
+  goToStep(1);
+}
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + type;
+}
+</script>
+</body>
+</html>
